@@ -35,21 +35,32 @@ namespace ConsoleApplication
             var ast = Parse(tokens);
         }
 
-        public class AstNode {
-            public AstNodeType Type;
+        public abstract class AstNode 
+        {
+            public abstract AstNodeType Type { get; }
+        }
+
+        public class ProgramNode : AstNode 
+        {
+            public override AstNodeType Type => AstNodeType.Program;
 
             public List<AstNode> Body;
         }
 
+        public class ExpressionStatement : AstNode {
+            public override AstNodeType Type => AstNodeType.ExpressionStatement;
+
+            public AstNode Left;
+
+            public AstNode Right;
+        }
+
+
+
         public enum AstNodeType {
             Program,
-
             ExpressionStatement,
-
-            Expression,
-            Term,
-            Factor,
-            Literal,
+            BinaryExpression,
         }
 
         public static ParseResult Parse(List<Token> tokens) {
@@ -69,7 +80,9 @@ namespace ConsoleApplication
             public int Index = 0;
             public List<Token> Tokens;
 
-            public AstNode Node = null;
+            public ProgramNode Program = new ProgramNode();
+
+            public AstNode Current = null;
         }
 
         public class ParseResult {
@@ -89,7 +102,7 @@ namespace ConsoleApplication
         }
 
         public static ParseResult Parse_Statement(ParseContext context) {
-            context.Node = new AstNode { Type = AstNodeType.Program };
+            context.Program = new ProgramNode();
 
             // The destinction between a statement and an expression statement
             // is that the statement doesn't actually return anything... so 
