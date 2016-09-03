@@ -1,0 +1,7 @@
+{
+    "projects":[
+        "erg",
+        "erg-compiler",
+        "erg-test"
+    ]
+}
