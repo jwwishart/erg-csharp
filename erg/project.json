@@ -13,7 +13,8 @@
         "Microsoft.NETCore.App": {
           "type": "platform",
           "version": "1.0.0"
-        }
+        },
+        "System.IO.FileSystem": "4.0.1"
       },
       "imports": "dnxcore50"
     }
