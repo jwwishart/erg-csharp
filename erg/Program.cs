@@ -11,8 +11,8 @@ namespace ConsoleApplication
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine("erg 0 (C) 2016 Justin Wishart");
-            Console.WriteLine(Directory.GetCurrentDirectory());
+            Console.WriteLine("erg 0 (C) 2016 Justin Wishart\n");
+            Console.WriteLine("Working Directory: " + Directory.GetCurrentDirectory());
 
             var code = File.ReadAllText(
                 System.IO.Path.Combine(
@@ -20,7 +20,6 @@ namespace ConsoleApplication
                     "_temp",
                     "test.erg"));
 
-            
             Console.WriteLine(code);
 
             // TOKENIZER
@@ -48,9 +47,9 @@ namespace ConsoleApplication
             }
 
             if (result.Success) {
-                Console.WriteLine("YAY!!!");
+                Console.WriteLine("\nCompilation Done!");
             } else {
-                Console.WriteLine(":'o(");
+                Console.WriteLine("\nGet used to this... The program didn't compile :o(");
             }
         }
 
