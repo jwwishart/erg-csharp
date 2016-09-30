@@ -116,8 +116,6 @@ namespace ConsoleApplication
                 throw new ArgumentException(
                     "Expected token of type " + type.ToString() + 
                     " but got one of type " + context.Tokens[context.Index].Type.ToString());
-
-                return false;
             }
 
             return true;
