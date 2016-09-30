@@ -237,6 +237,8 @@ namespace ConsoleApplication
         public class Token {
             public TokenType Type = TokenType.Unknown;
             public string Value = String.Empty;
+
+            // TODO: include file, line and column stuff here
         }
 
         public static List<Token> Lex(string code) {
@@ -247,6 +249,7 @@ namespace ConsoleApplication
                 if (index > code.Length - 1) break;
                 
                 switch (code[index]) {
+                    // TODO: reutrn whitespace...
                     case ' ':
                         // Basically ignore spaces
                         index++;
