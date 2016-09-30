@@ -249,9 +249,9 @@ namespace ConsoleApplication
                 if (index > code.Length - 1) break;
                 
                 switch (code[index]) {
-                    // TODO: reutrn whitespace...
                     case ' ':
-                        // Basically ignore spaces
+                        // Basically ignore spaces for now
+                        // TODO: return whitespace...
                         index++;
                         continue;
                     case '0':
