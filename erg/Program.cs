@@ -113,8 +113,6 @@ namespace ConsoleApplication
                 throw new ArgumentException(
                     "Expected token of type " + type.ToString() + 
                     " but got one of type " + context.Tokens[context.Index].Type.ToString());
-
-                return false;
             }
 
             return true;
@@ -242,6 +240,8 @@ namespace ConsoleApplication
         public class Token {
             public TokenType Type = TokenType.Unknown;
             public string Value = String.Empty;
+
+            // TODO: include file, line and column stuff here
         }
 
         public static List<Token> Lex(string code) {
@@ -253,7 +253,8 @@ namespace ConsoleApplication
                 
                 switch (code[index]) {
                     case ' ':
-                        // Basically ignore spaces
+                        // Basically ignore spaces for now
+                        // TODO: return whitespace...
                         index++;
                         continue;
                     case '0':
