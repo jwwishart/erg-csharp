@@ -53,6 +53,13 @@ namespace ConsoleApplication
             }
         }
 
+        public enum AstNodeType {
+            Program,
+            File,
+            ExpressionStatement,
+            BinaryExpression,
+        }
+
         public abstract class AstNode 
         {
             public abstract AstNodeType Type { get; }
@@ -76,15 +83,6 @@ namespace ConsoleApplication
             public AstNode Left = null;
 
             public AstNode Right = null;
-        }
-
-
-
-        public enum AstNodeType {
-            Program,
-            File,
-            ExpressionStatement,
-            BinaryExpression,
         }
 
         public static ParseResult Parse(ParseContext context) {
@@ -222,6 +220,12 @@ namespace ConsoleApplication
             throw new ArgumentException("Parse Error: Expected factor = ident | number | \"(\" expression \")\" .");
         }
 
+
+
+        // Lexer
+        //
+
+        
         public enum TokenType {
             Unknown,
 
