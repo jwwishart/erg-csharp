@@ -7,6 +7,8 @@ namespace ConsoleApplication
 
 
     // TODO create customer parser exception functions instead of using ArgumentException
+    // ???? why are we even thinking of using exceptions? return error codes instead or
+    // ???? object fields with information about the error.
     public class Program
     {
         public static void Main(string[] args)
@@ -44,6 +46,7 @@ namespace ConsoleApplication
             } catch (ArgumentException ex) {
                 Console.WriteLine("Parser Error: " + ex.Message);
                 result = new ParseResult { Success = false };
+                throw;
             }
 
             if (result.Success) {
@@ -62,23 +65,23 @@ namespace ConsoleApplication
 
         public abstract class AstNode 
         {
-            public abstract AstNodeType Type { get; }
         }
 
         public class ProgramNode : AstNode 
         {
-            public override AstNodeType Type => AstNodeType.Program;
 
             public List<AstNode> Files = new List<AstNode>();
         }
 
         public class FileNode: AstNode {
-            public override AstNodeType Type => AstNodeType.File;
             public List<AstNode> Body;
         }
 
         public class ExpressionStatement : AstNode {
-            public override AstNodeType Type => AstNodeType.ExpressionStatement;
+
+        }
+
+        public class BinaryExpression : AstNode {
 
             public AstNode Left = null;
 
@@ -95,14 +98,35 @@ namespace ConsoleApplication
 
             public ProgramNode Program = new ProgramNode();
 
-            public AstNode Current = null;
+            public List<AstNode> Scope {get;} = new List<AstNode>();
+
+            public void PopScope() {
+                Scope.RemoveAt(Scope.Count - 1);
+            }
+
+            public void PushScope(AstNode node) {
+                Scope.Add(node);
+            }
+
+            public AstNode CurrentScope {
+                get {
+                    if (Scope.Count == 0) return Program;
+
+                    return Scope[Scope.Count - 1];
+                }
+            }
         }
 
         public class ParseResult {
             public bool Success = true;
         }
 
+        public static bool IsEof(ParseContext context) {
+            return !(context.Tokens.Count > context.Index);
+        }
+
         public static bool Accept(ParseContext context, TokenType type) {
+            // Console.WriteLine("Accept: context.Index = " + context.Index);
             return context.Tokens[context.Index].Type == type;
         }
 
@@ -120,49 +144,81 @@ namespace ConsoleApplication
 
         public static ParseResult Parse_Program(ParseContext context) {
             context.Program = new ProgramNode();
+            context.PushScope(context.Program);
 
-            return Parse_File(context);
+            // TODO(jwwishart) need to ensure that all files are done before returning...
+            // some might have been added during compilation
+            var result = Parse_File(context);
+            context.PopScope();
+            return result;
         }
 
         public static ParseResult Parse_File(ParseContext context) {
             var file = new FileNode();
             context.Program.Files.Add(file);
-            context.Current = file;
+            context.PushScope(file);
 
             while (context.Index <= context.Tokens.Count - 1) {
                 var result = Parse_Statement(context);
+
                 if (result.Success == false) {
+                    context.PopScope();
                     return result;
                 }
             }
 
+            context.PopScope();
             return new ParseResult();
         }
 
         public static ParseResult Parse_Statement(ParseContext context) {
+            var statement = new ExpressionStatement();
+            context.PushScope(statement);
+
             // The destinction between a statement and an expression statement
             // is that the statement doesn't actually return anything... so 
             // the whole statement would not evaluate to something... but that is strange...
             // so why is everything not an expression? an Assignment? why not? it evaluates to
             // the lhs assigned value.
-            var currentToken = context.Tokens[context.Index];
+            if (IsEof(context)) {
+                context.PopScope();
 
-            return Parse_Expression(context);
+                return new ParseResult();
+            }
+
+            var currentToken = context.Tokens[context.Index];
+            
+            var result = Parse_Expression(context);
+            context.PopScope();
+            return result;
         }
 
         public static ParseResult Parse_Expression(ParseContext context) {
             // expression = ["+"|"-"] term {("+"|"-") term} .
+            // TODO ? what type of expressions are there?
+            // - binary expressions?
+            // - ? unary expression? whaAAATTT?
 
             // TODO store the AST
+            if (IsEof(context)) return new ParseResult();
+
             if (Accept(context, TokenType.Add) || Accept(context, TokenType.Subtract)) {
                 context.Index++;
+            
             }
+
+            if (IsEof(context)) return new ParseResult();
 
             var term = Parse_Term(context);
 
             if (term.Success) {
+                if (IsEof(context)) return new ParseResult();
+
                 if (Accept(context, TokenType.Add) || Accept(context, TokenType.Add)) {
                     context.Index++;
+
+                    if (IsEof(context)) return new ParseResult();
+
                     var term2 = Parse_Term(context);
                     if (term2.Success) {
                         return term2;
@@ -185,11 +241,14 @@ namespace ConsoleApplication
                 return factor;
             }
 
+            if (IsEof(context)) return new ParseResult();
+
             if (Accept(context, TokenType.Multiply)) {
                 context.Index++;
                 return Parse_Factor(context);
             }
 
+            if (IsEof(context)) return new ParseResult();
             if (Accept(context, TokenType.Divide)) {
                 context.Index++;
                 return Parse_Factor(context);
@@ -203,12 +262,21 @@ namespace ConsoleApplication
         public static ParseResult Parse_Factor(ParseContext context) {
             // factor = ident | number | "(" expression ")" .
 
+            // TODO identifiers
+            // TODO Numbers and other primitive types
+            // TODO expressions (recursive parenthesised expression? or 
+            //   are the parenthesis optional?)
+
             // Numbers could be prefixed with - or +
+            if (IsEof(context)) return new ParseResult();
+
             if (Accept(context, TokenType.Add) || Accept(context, TokenType.Subtract)) {
                 context.Index++;
 
                 Expect(context, TokenType.LiteralNumber);
             }
+
+            if (IsEof(context)) return new ParseResult();
 
             if (Accept(context, TokenType.LiteralNumber)) {
                 context.Index++;
@@ -226,7 +294,8 @@ namespace ConsoleApplication
         
         public enum TokenType {
             Unknown,
-
+            Whitespace,
+            
             // Literal Values
             LiteralNumber,
 
@@ -250,12 +319,14 @@ namespace ConsoleApplication
 
             while (true) {
                 if (index > code.Length - 1) break;
-                
+                         
                 switch (code[index]) {
                     case ' ':
                         // Basically ignore spaces for now
                         // TODO: return whitespace...
                         index++;
+                        // result.Add(new Token { Type = TokenType.Whitespace});
+
                         continue;
                     case '0':
                     case '1':
@@ -266,6 +337,7 @@ namespace ConsoleApplication
                     case '6':
                     case '7':
                     case '8':
+
                     case '9':
                         GetNumber(code, ref index, result);
                         continue;
